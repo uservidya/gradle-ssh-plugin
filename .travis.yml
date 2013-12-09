@@ -1,5 +1,9 @@
 language: java
 jdk: oraclejdk7
 script: TERM=dumb ./gradlew -i build
+
 after_success:
-  - TERM=dumb ./gradlew -b acceptance-tests.gradle -i acceptanceTests
+  - ssh-keygen -t rsa -N '' -C '' -f ~/.ssh/id_rsa
+  - tee -a ~/.ssh/authorized_keys < ~/.ssh/id_rsa.pub
+  - ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa localhost true
+  - TERM=dumb ./gradlew -b acceptance-tests.gradle -i test
