@@ -24,16 +24,16 @@ remotes {
         role 'testServers'
         host = 'localhost'
         user = System.properties['user.name']
-        identity = file("${System.properties['user.home']}/.ssh/id_rsa")
+        identity = file("${System.properties['user.home']}/.ssh/acceptance_test_rsa")
     }
 }
 
 task generateUserKey(type: Exec) {
-    commandLine 'ssh-keygen -b 4096 -t rsa'
+    commandLine 'ssh-keygen -b 4096 -t rsa -f .ssh/acceptance_test_rsa -N ""'
 }
 
 task addAuthorizedKeys(type: Exec, dependsOn: generateUserKey) {
-    commandLine 'cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys'
+    commandLine 'cat ~/.ssh/acceptance_test_rsa.pub >> ~/.ssh/authorized_keys'
 }
 
 task startSshServer(type: Exec) {
