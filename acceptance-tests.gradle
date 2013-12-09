@@ -1,0 +1,52 @@
+/**
+ * Automated acceptance tests using real server.
+ */
+
+buildscript {
+    def productProperties = new Properties()
+    file('gradle.properties').withReader { Reader reader -> productProperties.load reader }
+    def localBuild = files("build/libs/gradle-ssh-plugin-${productProperties.version}.jar")
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath files(localBuild)
+        classpath 'com.jcraft:jsch:0.1.50'
+    }
+}
+
+apply plugin: 'ssh'
+
+remotes {
+    localhost {
+        role 'testServers'
+        host = 'localhost'
+        user = System.properties['user.name']
+        identity = file("${System.properties['user.home']}/.ssh/id_rsa")
+    }
+}
+
+task generateUserKey(type: Exec) {
+    commandLine 'ssh-keygen -b 4096 -t rsa'
+}
+
+task addAuthorizedKeys(type: Exec, dependsOn: generateUserKey) {
+    commandLine 'cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys'
+}
+
+task startSshServer(type: Exec) {
+    commandLine 'sudo service sshd start'
+}
+
+task addKnownHosts(type: Exec, dependsOn: [addAuthorizedKeys, startSshServer]) {
+    commandLine 'ssh -o StrictHostKeyChecking=no localhost'
+}
+
+task setUpSshServer(dependsOn: addKnownHosts) {
+}
+
+task acceptanceTests(dependsOn: setUpSshServer) {
+    // TODO
+}
