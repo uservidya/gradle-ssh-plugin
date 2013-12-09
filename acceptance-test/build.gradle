@@ -1,0 +1,30 @@
+description 'Automated acceptance test with SSH server'
+
+buildscript {
+    def productProperties = file('../gradle.properties').withReader { r ->
+        new Properties().with { it.load(r as Reader); it }
+    }
+
+    repositories {
+        flatDir dirs: '../build/libs'
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath "org.hidetake:gradle-ssh-plugin:${productProperties.version}"
+    }
+}
+
+apply plugin: 'ssh'
+
+remotes {
+    localhost {
+        role 'testServers'
+        host = 'localhost'
+        user = System.properties['user.name']
+        identity = file("${System.properties['user.home']}/.ssh/id_rsa")
+    }
+}
+
+task test() {
+}
