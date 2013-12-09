@@ -6,4 +6,4 @@ after_success:
   - ssh-keygen -t rsa -N '' -C '' -f ~/.ssh/id_rsa
   - tee -a ~/.ssh/authorized_keys < ~/.ssh/id_rsa.pub
   - ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa localhost true
-  - TERM=dumb ./gradlew -b acceptance-tests.gradle -i test
+  - TERM=dumb ./gradlew -b acceptance-test.gradle -i test
