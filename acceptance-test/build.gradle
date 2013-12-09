@@ -6,7 +6,9 @@ buildscript {
     }
 
     repositories {
-        flatDir dirs: '../build/libs'
+        ivy {
+            url = '../build/ivy'
+        }
         mavenCentral()
     }
 

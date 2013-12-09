@@ -28,6 +28,15 @@ artifacts {
     archives sourcesJar
 }
 
+task uploadArchivesForAcceptanceTest(type: Upload) {
+    configuration = configurations.runtime
+    repositories {
+        ivy {
+            url = "$buildDir/ivy"
+        }
+    }
+}
+
 if (gradle.startParameter.taskNames.contains('uploadArchives')) {
     apply from: 'build.publish.gradle'
 }
