@@ -31,9 +31,7 @@ artifacts {
 task uploadArchivesForAcceptanceTest(type: Upload) {
     configuration = configurations.runtime
     repositories {
-        ivy {
-            url = "$buildDir/ivy"
-        }
+        ivy { url = "$buildDir/ivy" }
     }
 }
 

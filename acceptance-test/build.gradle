@@ -1,14 +1,11 @@
 description 'Automated acceptance test with SSH server'
 
 buildscript {
-    def productProperties = file('../gradle.properties').withReader { r ->
-        new Properties().with { it.load(r as Reader); it }
-    }
+    def productProperties = new Properties()
+    file('../gradle.properties').withReader { productProperties.load it }
 
     repositories {
-        ivy {
-            url = '../build/ivy'
-        }
+        ivy { url = '../build/ivy' }
         mavenCentral()
     }
 
