@@ -16,15 +16,15 @@ buildscript {
 
 apply from: 'fixture.gradle'
 
-tasks.collectEntries {
-    switch (it.name) {
-        case ~/^then:/: return [it, tasks.findByName(it.name.replaceFirst(~/^then:/, 'when:'))]
-        case ~/^when:/: return [it, tasks.findByName(it.name.replaceFirst(~/^when:/, 'given:'))]
-        default:        return [it, null]
-    }
-}.each { Task self, Task target ->
-    if (target) {
-        self.dependsOn(target)
+def dependencyRules = ['then': 'when', 'when': 'given']
+tasks.each { task ->
+    dependencyRules.each { x, y ->
+        if (task.name.endsWith(x)) {
+            def target = tasks.getByName(task.name.substring(0, task.name.length() - x.length()) + y)
+            if (target) {
+                task.dependsOn(target)
+            }
+        }
     }
 }
 

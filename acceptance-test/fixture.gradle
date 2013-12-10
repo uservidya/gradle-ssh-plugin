@@ -14,12 +14,19 @@ remotes {
 }
 
 
-task 'when: executes a command'(type: SshTask) {
+def randomPathFile = file("${buildDir}/${UUID.randomUUID()}")
+
+task('Execute a command: given') << {
+    randomPathFile.delete()
+}
+
+task('Execute a command: when', type: SshTask) {
     session(remotes.localhost) {
-        execute 'touch /tmp/something'
+        execute "touch '${randomPathFile.path}'"
     }
 }
 
-task 'then: executes a command' << {
-    assert file('/tmp/something').exists()
+task('Execute a command: then') << {
+    assert randomPathFile.exists()
+    randomPathFile.delete()
 }
