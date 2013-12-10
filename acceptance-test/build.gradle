@@ -14,16 +14,19 @@ buildscript {
     }
 }
 
-apply plugin: 'ssh'
+apply from: 'fixture.gradle'
 
-remotes {
-    localhost {
-        role 'testServers'
-        host = 'localhost'
-        user = System.properties['user.name']
-        identity = file("${System.properties['user.home']}/.ssh/id_rsa")
+tasks.collectEntries {
+    switch (it.name) {
+        case ~/^then:/: return [it, tasks.findByName(it.name.replaceFirst(~/^then:/, 'when:'))]
+        case ~/^when:/: return [it, tasks.findByName(it.name.replaceFirst(~/^when:/, 'given:'))]
+        default:        return [it, null]
+    }
+}.each { Task self, Task target ->
+    if (target) {
+        self.dependsOn(target)
     }
 }
 
-task test() {
+task test(dependsOn: tasks.findAll { it.name =~ /^then:/ }) {
 }
