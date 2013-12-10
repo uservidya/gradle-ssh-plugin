@@ -22,13 +22,13 @@ task executeCommand(type: SshTask) {
 
 feature('executing a command') {
     given {
-        tasks.executeCommand.ext.tempFile = file("${buildDir}/${UUID.randomUUID()}")
-        assert !tasks.executeCommand.ext.tempFile.exists()
+        whenTask.ext.tempFile = file("${buildDir}/${UUID.randomUUID()}")
+        assert !whenTask.ext.tempFile.exists()
     }
     when(tasks.executeCommand)
     then {
-        assert tasks.executeCommand.ext.tempFile.exists()
-        assert tasks.executeCommand.ext.tempFile.delete()
+        assert whenTask.ext.tempFile.exists()
+        assert whenTask.ext.tempFile.delete()
     }
 }
 
@@ -41,13 +41,13 @@ task executeCommandByRole(type: SshTask) {
 
 feature('filter hosts by role') {
     given {
-        tasks.executeCommandByRole.ext.tempFile = file("${buildDir}/${UUID.randomUUID()}")
-        assert !tasks.executeCommandByRole.ext.tempFile.exists()
+        whenTask.ext.tempFile = file("${buildDir}/${UUID.randomUUID()}")
+        assert !whenTask.ext.tempFile.exists()
     }
     when(tasks.executeCommandByRole)
     then {
-        assert tasks.executeCommandByRole.ext.tempFile.exists()
-        assert tasks.executeCommandByRole.ext.tempFile.delete()
+        assert whenTask.ext.tempFile.exists()
+        assert whenTask.ext.tempFile.delete()
     }
 }
 
@@ -60,11 +60,11 @@ task obtainValue(type: SshTask) {
 
 feature('obtaining a value from the remote command') {
     given {
-        tasks.obtainValue.ext.x = (Math.random() * 100) as int
-        tasks.obtainValue.ext.y = (Math.random() * 100) as int
+        whenTask.ext.x = (Math.random() * 100) as int
+        whenTask.ext.y = (Math.random() * 100) as int
     }
     when(tasks.obtainValue)
     then {
-        assert (tasks.obtainValue.ext.z as int) == (tasks.obtainValue.ext.x + tasks.obtainValue.ext.y)
+        assert (whenTask.ext.z as int) == (whenTask.ext.x + whenTask.ext.y)
     }
 }

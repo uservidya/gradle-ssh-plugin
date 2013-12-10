@@ -16,21 +16,27 @@ interface FeatureDelegate {
     void given(Closure givenClosure)
     void when(Task task)
     void then(Closure thenClosure)
+    Task getWhenTask()
 }
 
 def feature(String name, Closure featureClosure) {
-    def given = task("$name@given")
-    def when = task("$name@when", dependsOn: given)
-    def then = task("$name@then", dependsOn: when)
+    final given = task("$name@given")
+    final when = task("$name@when", dependsOn: given)
+    final then = task("$name@then", dependsOn: when)
     tasks.test.dependsOn(then)
 
+    Task whenTask = null
     featureClosure.delegate = [
         given: { Closure c -> given << c },
         then:  { Closure c -> then << c },
-        when:  { Task t -> when.dependsOn(t.dependsOn(given)) }
+        when:  { Task t -> whenTask = t },
+        getWhenTask: { -> whenTask }
     ] as FeatureDelegate
     featureClosure.resolveStrategy = Closure.DELEGATE_FIRST
     featureClosure.call()
+
+    when.dependsOn(whenTask)
+    whenTask.dependsOn(given)
 }
 
 task test {
