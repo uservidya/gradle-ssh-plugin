@@ -6,4 +6,4 @@ script:
   - ssh-keygen -t rsa -N '' -C '' -f ~/.ssh/id_rsa
   - tee -a ~/.ssh/authorized_keys < ~/.ssh/id_rsa.pub
   - ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa localhost true
-  - TERM=dumb ./gradlew -i -b acceptance-test/build.gradle test
+  - TERM=dumb ./gradlew -i -b acceptance-test.gradle test
