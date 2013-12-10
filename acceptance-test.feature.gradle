@@ -19,13 +19,11 @@ feature('Execute a command') {
     given {
         randomPathFile.delete()
     }
-
-    whenTask(type: SshTask) {
+    when(type: SshTask) {
         session(remotes.localhost) {
             execute "touch '${randomPathFile.path}'"
         }
     }
-
     then {
         assert randomPathFile.exists()
         randomPathFile.delete()

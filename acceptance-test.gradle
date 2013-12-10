@@ -5,26 +5,24 @@ buildscript {
         ivy { url = "$buildDir/ivy" }
         mavenCentral()
     }
-
     dependencies {
         classpath "org.hidetake:gradle-ssh-plugin:$version"
     }
-
     // avoid dependency resolution problem
     version = null
 }
 
 interface FeatureDelegate {
     void given(Closure givenClosure)
-    void whenTask(Map map, Closure whenClosure)
+    void when(Map map, Closure whenClosure)
     void then(Closure thenClosure)
 }
 
 def feature(String name, Closure featureClosure) {
     featureClosure.delegate = [
-            given: { Closure givenClosure -> task("$name@given") << givenClosure },
-            then: { Closure thenClosure -> task("$name@then") << thenClosure },
-            whenTask: { Map map, Closure whenClosure -> task(map, "$name@when", whenClosure) },
+        given: { Map map = [:], Closure givenClosure -> task(map, "$name@given") << givenClosure },
+        when:  { Map map = [:], Closure whenClosure  -> task(map, "$name@when", whenClosure) },
+        then:  { Map map = [:], Closure thenClosure  -> task(map, "$name@then") << thenClosure },
     ] as FeatureDelegate
     featureClosure.resolveStrategy = Closure.DELEGATE_FIRST
     featureClosure.call()
