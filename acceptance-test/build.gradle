@@ -14,7 +14,7 @@ buildscript {
     }
 }
 
-apply from: 'fixture.gradle'
+apply from: 'features.gradle'
 
 def dependencyRules = ['then': 'when', 'when': 'given']
 tasks.each { task ->
