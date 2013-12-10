@@ -19,18 +19,28 @@ interface FeatureDelegate {
 }
 
 def feature(String name, Closure featureClosure) {
+    Closure givenClosure = {}
+    Closure thenClosure = {}
     featureClosure.delegate = [
-        given: { Map map = [:], Closure givenClosure -> task(map, "$name@given") << givenClosure },
-        when:  { Map map = [:], Closure whenClosure  -> task(map, "$name@when", whenClosure) },
-        then:  { Map map = [:], Closure thenClosure  -> task(map, "$name@then") << thenClosure },
+        given: { Closure c -> givenClosure = c },
+        then:  { Closure c -> thenClosure = c },
     ] as FeatureDelegate
     featureClosure.resolveStrategy = Closure.DELEGATE_FIRST
+
+    final initialTasks = []
+    initialTasks.addAll(tasks)
+
     featureClosure.call()
 
-    tasks.test.dependsOn(task(name))
-    tasks.getByName("$name").dependsOn(tasks.getByName("$name@then"))
-    tasks.getByName("$name@then").dependsOn(tasks.getByName("$name@when"))
-    tasks.getByName("$name@when").dependsOn(tasks.getByName("$name@given"))
+    final addedTasks = []
+    addedTasks.addAll(tasks)
+    addedTasks.removeAll(initialTasks)
+
+    def given = task("$name@given") << givenClosure
+    addedTasks.each { Task task -> task.dependsOn(given) }
+    def when = task("$name@when", dependsOn: addedTasks)
+    def then = task("$name@then", dependsOn: when) << thenClosure
+    tasks.test.dependsOn(then)
 }
 
 task test {

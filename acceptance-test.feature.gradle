@@ -13,19 +13,20 @@ remotes {
     }
 }
 
-feature('Execute a command') {
-    def randomPathFile = file("${buildDir}/${UUID.randomUUID()}")
-
+feature('executing a command') {
+    def temporaryName = "${buildDir}/${UUID.randomUUID()}"
     given {
-        randomPathFile.delete()
+        assert !file(temporaryName).exists()
     }
-    when(type: SshTask) {
+
+    task executeCommand(type: SshTask) {
         session(remotes.localhost) {
-            execute "touch '${randomPathFile.path}'"
+            execute "touch '${file(temporaryName).path}'"
         }
     }
+
     then {
-        assert randomPathFile.exists()
-        randomPathFile.delete()
+        assert file(temporaryName).exists()
+        assert file(temporaryName).delete()
     }
 }
