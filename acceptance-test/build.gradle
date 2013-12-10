@@ -14,19 +14,28 @@ buildscript {
     }
 }
 
+interface FeatureDelegate {
+    void given(Closure givenClosure)
+    void whenTask(Map map, Closure whenClosure)
+    void then(Closure thenClosure)
+}
+
+def feature(String name, Closure featureClosure) {
+    featureClosure.delegate = [
+            given: { Closure givenClosure -> task("$name@given") << givenClosure },
+            then: { Closure thenClosure -> task("$name@then") << thenClosure },
+            whenTask: { Map map, Closure whenClosure -> task(map, "$name@when", whenClosure) },
+    ] as FeatureDelegate
+    featureClosure.resolveStrategy = Closure.DELEGATE_FIRST
+    featureClosure.call()
+
+    tasks.test.dependsOn(task(name))
+    tasks.getByName("$name").dependsOn(tasks.getByName("$name@then"))
+    tasks.getByName("$name@then").dependsOn(tasks.getByName("$name@when"))
+    tasks.getByName("$name@when").dependsOn(tasks.getByName("$name@given"))
+}
+
+task test {
+}
+
 apply from: 'features.gradle'
-
-def dependencyRules = ['then': 'when', 'when': 'given']
-tasks.each { task ->
-    dependencyRules.each { x, y ->
-        if (task.name.endsWith(x)) {
-            def target = tasks.getByName(task.name.substring(0, task.name.length() - x.length()) + y)
-            if (target) {
-                task.dependsOn(target)
-            }
-        }
-    }
-}
-
-task test(dependsOn: tasks.findAll { it.name =~ /^then:/ }) {
-}
