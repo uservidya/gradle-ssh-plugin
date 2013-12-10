@@ -1,17 +1,17 @@
 description 'Automated acceptance test with SSH server'
 
 buildscript {
-    def productProperties = new Properties()
-    file('../gradle.properties').withReader { productProperties.load it }
-
     repositories {
-        ivy { url = '../build/ivy' }
+        ivy { url = "$buildDir/ivy" }
         mavenCentral()
     }
 
     dependencies {
-        classpath "org.hidetake:gradle-ssh-plugin:${productProperties.version}"
+        classpath "org.hidetake:gradle-ssh-plugin:$version"
     }
+
+    // avoid dependency resolution problem
+    version = null
 }
 
 interface FeatureDelegate {
@@ -38,4 +38,4 @@ def feature(String name, Closure featureClosure) {
 task test {
 }
 
-apply from: 'features.gradle'
+apply from: 'acceptance-test.feature.gradle'
