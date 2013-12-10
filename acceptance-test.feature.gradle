@@ -13,20 +13,58 @@ remotes {
     }
 }
 
+
+task executeCommand(type: SshTask) {
+    session(remotes.localhost) {
+        execute "touch '${ext.tempFile.path}'"
+    }
+}
+
 feature('executing a command') {
-    def temporaryName = "${buildDir}/${UUID.randomUUID()}"
     given {
-        assert !file(temporaryName).exists()
+        tasks.executeCommand.ext.tempFile = file("${buildDir}/${UUID.randomUUID()}")
+        assert !tasks.executeCommand.ext.tempFile.exists()
     }
-
-    task executeCommand(type: SshTask) {
-        session(remotes.localhost) {
-            execute "touch '${file(temporaryName).path}'"
-        }
-    }
-
+    when(tasks.executeCommand)
     then {
-        assert file(temporaryName).exists()
-        assert file(temporaryName).delete()
+        assert tasks.executeCommand.ext.tempFile.exists()
+        assert tasks.executeCommand.ext.tempFile.delete()
+    }
+}
+
+
+task executeCommandByRole(type: SshTask) {
+    session(remotes.role('testServers')) {
+        execute "touch '${ext.tempFile.path}'"
+    }
+}
+
+feature('filter hosts by role') {
+    given {
+        tasks.executeCommandByRole.ext.tempFile = file("${buildDir}/${UUID.randomUUID()}")
+        assert !tasks.executeCommandByRole.ext.tempFile.exists()
+    }
+    when(tasks.executeCommandByRole)
+    then {
+        assert tasks.executeCommandByRole.ext.tempFile.exists()
+        assert tasks.executeCommandByRole.ext.tempFile.delete()
+    }
+}
+
+
+task obtainValue(type: SshTask) {
+    session(remotes.localhost) {
+        ext.z = execute("expr $x + $y")
+    }
+}
+
+feature('obtaining a value from the remote command') {
+    given {
+        tasks.obtainValue.ext.x = (Math.random() * 100) as int
+        tasks.obtainValue.ext.y = (Math.random() * 100) as int
+    }
+    when(tasks.obtainValue)
+    then {
+        assert (tasks.obtainValue.ext.z as int) == (tasks.obtainValue.ext.x + tasks.obtainValue.ext.y)
     }
 }
