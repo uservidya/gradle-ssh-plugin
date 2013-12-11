@@ -232,17 +232,34 @@ task putFile(type: SshTask) {
 }
 
 
-feature('requesting files on the remote host') {
+feature('acquiring data files on the remote host') {
     given {
+        when.ext.x = (Math.random() * 100) as int
+        when.ext.y = (Math.random() * 100) as int
+        when.ext.plusFileName = UUID.randomUUID().toString()
+        when.ext.minusFileName = UUID.randomUUID().toString()
     }
-    //when('getFile')
+    when('acquireDataFile')
     then {
+        def plusFile = new File(buildDir, when.ext.plusFileName as String)
+        assert plusFile.text as int == (when.ext.x + when.ext.y)
+        assert plusFile.delete()
+
+        def minusFile = new File(buildDir, when.ext.minusFileName as String)
+        assert minusFile.text as int == (when.ext.x - when.ext.y)
+        assert minusFile.delete()
     }
 }
 
-// TODO
-task getFile(type: SshTask) {
+task acquireDataFile(type: SshTask) {
     session(remotes.localhost) {
-        get(file('build.gradle').path, '/dev/null')
+        execute("expr $x + $y > /tmp/$plusFileName")
+        execute("expr $x - $y > /tmp/$minusFileName")
+
+        get("/tmp/$plusFileName", buildDir.path)
+        get("/tmp/$minusFileName", buildDir.path)
+
+        execute("rm -v /tmp/$plusFileName")
+        execute("rm -v /tmp/$minusFileName")
     }
 }
