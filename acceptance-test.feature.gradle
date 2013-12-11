@@ -16,38 +16,44 @@ remotes {
 
 feature('executing a command') {
     given {
+        when.ext.x = (Math.random() * 100) as int
+        when.ext.y = (Math.random() * 100) as int
         when.ext.tempFile = file("${buildDir}/${UUID.randomUUID()}")
         assert !when.ext.tempFile.exists()
     }
     when('executeCommand')
     then {
         assert when.ext.tempFile.exists()
+        assert when.ext.tempFile.text as int == (when.ext.x + when.ext.y)
         assert when.ext.tempFile.delete()
     }
 }
 
 task executeCommand(type: SshTask) {
     session(remotes.localhost) {
-        execute "touch '${ext.tempFile.path}'"
+        execute "expr $x + $y > '${tempFile.path}'"
     }
 }
 
 
 feature('filter hosts by role') {
     given {
+        when.ext.x = (Math.random() * 100) as int
+        when.ext.y = (Math.random() * 100) as int
         when.ext.tempFile = file("${buildDir}/${UUID.randomUUID()}")
         assert !when.ext.tempFile.exists()
     }
     when('executeCommandByRole')
     then {
         assert when.ext.tempFile.exists()
+        assert when.ext.tempFile.text as int == (when.ext.x + when.ext.y)
         assert when.ext.tempFile.delete()
     }
 }
 
 task executeCommandByRole(type: SshTask) {
     session(remotes.role('testServers')) {
-        execute "touch '${ext.tempFile.path}'"
+        execute "expr $x + $y > '${tempFile.path}'"
     }
 }
 
