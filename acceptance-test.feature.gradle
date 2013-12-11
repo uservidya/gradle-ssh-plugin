@@ -74,3 +74,175 @@ task obtainValue(type: SshTask) {
         ext.z = execute("expr $x + $y")
     }
 }
+
+
+feature('executing commands concurrently') {
+    given {
+    }
+    //when('executeConcurrently')
+    then {
+    }
+}
+
+// TODO
+task executeConcurrently(type: SshTask) {
+    session(remotes.localhost) {
+        [0, 2, 4].each { i ->
+            executeBackground "sleep ${i} && echo -n ${i}-\${SSH_CONNECTION}- && date"
+        }
+    }
+    session(remotes.localhost) {
+        [1, 3, 5].each { i ->
+            executeBackground "sleep ${i} && echo -n ${i}-\${SSH_CONNECTION}- && date"
+        }
+    }
+}
+
+
+feature('executing a privileged command by password-less sudo') {
+    given {
+    }
+    //when('executeSudoNoPwd')
+    then {
+    }
+}
+
+// TODO
+task executeSudoNoPwd(type: SshTask) {
+    session(remotes.localhost) {
+        execute('sudo env', pty: true)
+    }
+}
+
+
+feature('executing a privileged command with sudo interaction support') {
+    given {
+    }
+    //when('executeSudoWithPwd')
+    then {
+    }
+}
+
+// TODO
+task executeSudoWithPwd(type: SshTask) {
+    doFirst {
+        // of course you could just set the password in the remotes configuration,
+        // probably reading the password as a property from ~/.gradle/gradle.properties
+        remotes.localhost.password = project.sudoPwd
+    }
+    session(remotes.localhost) {
+        println description
+        executeSudo('env', pty: true)
+    }
+}
+
+
+feature('handling failure of the remote command') {
+    given {
+    }
+    //when('executeBadCommand')
+    then {
+    }
+}
+
+// TODO
+task executeBadCommand(type: SshTask) {
+    session(remotes.localhost) {
+        execute 'touch /root/test'
+    }
+}
+
+
+feature('handling failure of the remote command in background') {
+    given {
+    }
+    //when('executeBadCommandInBackground')
+    then {
+    }
+}
+
+// TODO
+task executeBadCommandInBackground(type: SshTask) {
+    session(remotes.localhost) {
+        executeBackground 'touch /root/test'
+    }
+}
+
+
+feature('stream interaction with the remote command') {
+    given {
+    }
+    //when('executeWithInteractions')
+    then {
+    }
+}
+
+// TODO
+task executeWithInteractions(type: SshTask) {
+    session(remotes.localhost) {
+        def oldPassword = 'old-one'
+        def newPassword = 'new-one'
+        execute('passwd', pty: true) {
+            interaction {
+                when(partial: ~/.+[Pp]assowrd: */) {
+                    standardInput << oldPassword << '\n'
+                    when(partial: ~/.+[Pp]assowrd: */) {
+                        standardInput << newPassword << '\n'
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+feature('using sshexec closure in a task') {
+    given {
+    }
+    //when('executeSshInTask')
+    then {
+    }
+}
+
+// TODO
+task executeSshInTask << {
+    def command = "date"
+    println command
+    sshexec {
+        session(remotes.localhost) {
+            execute command
+        }
+    }
+}
+
+
+feature('sending files to the remote host') {
+    given {
+    }
+    //when('putFile')
+    then {
+    }
+}
+
+// TODO
+task putFile(type: SshTask) {
+    session(remotes.localhost) {
+        put(file('build.gradle').path, '/dev/null')
+    }
+}
+
+
+feature('requesting files on the remote host') {
+    given {
+    }
+    //when('getFile')
+    then {
+    }
+}
+
+// TODO
+task getFile(type: SshTask) {
+    session(remotes.localhost) {
+        get(file('build.gradle').path, '/dev/null')
+    }
+}
