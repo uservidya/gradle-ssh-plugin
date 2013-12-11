@@ -14,9 +14,9 @@ buildscript {
 
 interface FeatureDelegate {
     void given(Closure givenClosure)
-    void when(Task task)
+    void when(String taskPath)
     void then(Closure thenClosure)
-    Task getWhenTask()
+    Task getWhen()
 }
 
 def feature(String name, Closure featureClosure) {
@@ -25,18 +25,23 @@ def feature(String name, Closure featureClosure) {
     final then = task("$name@then", dependsOn: when)
     tasks.test.dependsOn(then)
 
-    Task whenTask = null
+    def whenChild = null
     featureClosure.delegate = [
         given: { Closure c -> given << c },
         then:  { Closure c -> then << c },
-        when:  { Task t -> whenTask = t },
-        getWhenTask: { -> whenTask }
+        when:  { String taskPath ->
+            when.dependsOn(taskPath)
+            tasks.whenTaskAdded { Task task ->
+                if (task == tasks.getByPath(taskPath)) {
+                    task.dependsOn(given)
+                    whenChild = task
+                }
+            }
+        },
+        getWhen: { -> whenChild }
     ] as FeatureDelegate
     featureClosure.resolveStrategy = Closure.DELEGATE_FIRST
     featureClosure.call()
-
-    when.dependsOn(whenTask)
-    whenTask.dependsOn(given)
 }
 
 task test {

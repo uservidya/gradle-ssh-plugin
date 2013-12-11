@@ -14,24 +14,36 @@ remotes {
 }
 
 
+feature('executing a command') {
+    given {
+        when.ext.tempFile = file("${buildDir}/${UUID.randomUUID()}")
+        assert !when.ext.tempFile.exists()
+    }
+    when('executeCommand')
+    then {
+        assert when.ext.tempFile.exists()
+        assert when.ext.tempFile.delete()
+    }
+}
+
 task executeCommand(type: SshTask) {
     session(remotes.localhost) {
         execute "touch '${ext.tempFile.path}'"
     }
 }
 
-feature('executing a command') {
+
+feature('filter hosts by role') {
     given {
-        whenTask.ext.tempFile = file("${buildDir}/${UUID.randomUUID()}")
-        assert !whenTask.ext.tempFile.exists()
+        when.ext.tempFile = file("${buildDir}/${UUID.randomUUID()}")
+        assert !when.ext.tempFile.exists()
     }
-    when(tasks.executeCommand)
+    when('executeCommandByRole')
     then {
-        assert whenTask.ext.tempFile.exists()
-        assert whenTask.ext.tempFile.delete()
+        assert when.ext.tempFile.exists()
+        assert when.ext.tempFile.delete()
     }
 }
-
 
 task executeCommandByRole(type: SshTask) {
     session(remotes.role('testServers')) {
@@ -39,32 +51,20 @@ task executeCommandByRole(type: SshTask) {
     }
 }
 
-feature('filter hosts by role') {
+
+feature('obtaining a value from the remote command') {
     given {
-        whenTask.ext.tempFile = file("${buildDir}/${UUID.randomUUID()}")
-        assert !whenTask.ext.tempFile.exists()
+        when.ext.x = (Math.random() * 100) as int
+        when.ext.y = (Math.random() * 100) as int
     }
-    when(tasks.executeCommandByRole)
+    when('obtainValue')
     then {
-        assert whenTask.ext.tempFile.exists()
-        assert whenTask.ext.tempFile.delete()
+        assert (when.ext.z as int) == (when.ext.x + when.ext.y)
     }
 }
-
 
 task obtainValue(type: SshTask) {
     session(remotes.localhost) {
         ext.z = execute("expr $x + $y")
-    }
-}
-
-feature('obtaining a value from the remote command') {
-    given {
-        whenTask.ext.x = (Math.random() * 100) as int
-        whenTask.ext.y = (Math.random() * 100) as int
-    }
-    when(tasks.obtainValue)
-    then {
-        assert (whenTask.ext.z as int) == (whenTask.ext.x + whenTask.ext.y)
     }
 }
