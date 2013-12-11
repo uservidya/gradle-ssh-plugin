@@ -19,6 +19,17 @@ interface FeatureDelegate {
     Task getWhen()
 }
 
+project.ext.taskDependencyMapping = [:]
+tasks.whenTaskAdded { Task task ->
+    (project.ext.taskDependencyMapping as Map).findAll { String path, Closure closure ->
+        task == tasks.getByPath(path)
+    }.each { String path, Closure closure ->
+        closure(task)
+    }.each { String path, Closure closure ->
+        (project.ext.taskDependencyMapping as Map).remove(path)
+    }
+}
+
 def feature(String name, Closure featureClosure) {
     final given = task("$name@given")
     final when = task("$name@when", dependsOn: given)
@@ -31,11 +42,9 @@ def feature(String name, Closure featureClosure) {
         then:  { Closure c -> then << c },
         when:  { String taskPath ->
             when.dependsOn(taskPath)
-            tasks.whenTaskAdded { Task task ->
-                if (task == tasks.getByPath(taskPath)) {
-                    task.dependsOn(given)
-                    whenChild = task
-                }
+            (project.ext.taskDependencyMapping as Map).put(taskPath) { Task task ->
+                task.dependsOn(given)
+                whenChild = task
             }
         },
         getWhen: { -> whenChild }
