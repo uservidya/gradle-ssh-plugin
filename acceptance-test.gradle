@@ -14,43 +14,30 @@ buildscript {
 
 interface FeatureDelegate {
     void given(Closure givenClosure)
-    void when(String taskPath)
+    void when(Task whenTask)
     void then(Closure thenClosure)
-    Task getWhen()
-}
-
-project.ext.taskDependencyMapping = [:]
-tasks.whenTaskAdded { Task task ->
-    (project.ext.taskDependencyMapping as Map).findAll { String path, Closure closure ->
-        task == tasks.getByPath(path)
-    }.each { String path, Closure closure ->
-        closure(task)
-    }.each { String path, Closure closure ->
-        (project.ext.taskDependencyMapping as Map).remove(path)
-    }
 }
 
 def feature(String name, Closure featureClosure) {
-    final given = task("$name@given")
-    final when = task("$name@when", dependsOn: given)
-    final then = task("$name@then", dependsOn: when)
-    tasks.test.dependsOn(then)
+    Closure givenClosure = null
+    Closure thenClosure = null
+    Task whenTask = null
 
-    def whenChild = null
     featureClosure.delegate = [
-        given: { Closure c -> given << c },
-        then:  { Closure c -> then << c },
-        when:  { String taskPath ->
-            when.dependsOn(taskPath)
-            (project.ext.taskDependencyMapping as Map).put(taskPath) { Task task ->
-                task.dependsOn(given)
-                whenChild = task
-            }
-        },
-        getWhen: { -> whenChild }
+        given: { Closure c -> givenClosure = c },
+        then:  { Closure c -> thenClosure = c },
+        when:  { Task t -> whenTask = t },
     ] as FeatureDelegate
     featureClosure.resolveStrategy = Closure.DELEGATE_FIRST
     featureClosure.call()
+
+    if (whenTask) {
+        if (givenClosure) { whenTask.doFirst(givenClosure) }
+        if (thenClosure)  { whenTask.doLast(thenClosure) }
+        tasks.test.dependsOn(whenTask)
+    } else {
+        logger.warn "Feature ignored: $name"
+    }
 }
 
 task test {

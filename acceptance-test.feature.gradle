@@ -14,42 +14,29 @@ remotes {
 }
 
 
-feature('executing a command') {
-    given {
-        when.ext.x = (Math.random() * 100) as int
-        when.ext.y = (Math.random() * 100) as int
-        when.ext.tempFile = file("${buildDir}/${UUID.randomUUID()}")
-        assert !when.ext.tempFile.exists()
-    }
-    when('executeCommand')
-    then {
-        assert when.ext.tempFile.exists()
-        assert when.ext.tempFile.text as int == (when.ext.x + when.ext.y)
-        assert when.ext.tempFile.delete()
-    }
-}
-
 task executeCommand(type: SshTask) {
     session(remotes.localhost) {
         execute "expr $x + $y > '${tempFile.path}'"
     }
 }
 
-
-feature('filter hosts by role') {
+feature('executing a command') {
     given {
-        when.ext.x = (Math.random() * 100) as int
-        when.ext.y = (Math.random() * 100) as int
-        when.ext.tempFile = file("${buildDir}/${UUID.randomUUID()}")
-        assert !when.ext.tempFile.exists()
+        ext {
+            x = (Math.random() * 100) as int
+            y = (Math.random() * 100) as int
+            tempFile = file("${buildDir}/${UUID.randomUUID()}")
+        }
+        assert !tempFile.exists()
     }
-    when('executeCommandByRole')
+    when(tasks.executeCommand)
     then {
-        assert when.ext.tempFile.exists()
-        assert when.ext.tempFile.text as int == (when.ext.x + when.ext.y)
-        assert when.ext.tempFile.delete()
+        assert tempFile.exists()
+        assert tempFile.text as int == (x + y)
+        assert tempFile.delete()
     }
 }
+
 
 task executeCommandByRole(type: SshTask) {
     session(remotes.role('testServers')) {
@@ -57,17 +44,23 @@ task executeCommandByRole(type: SshTask) {
     }
 }
 
-
-feature('obtaining a value from the remote command') {
+feature('filter hosts by role') {
     given {
-        when.ext.x = (Math.random() * 100) as int
-        when.ext.y = (Math.random() * 100) as int
+        ext {
+            x = (Math.random() * 100) as int
+            y = (Math.random() * 100) as int
+            tempFile = file("${buildDir}/${UUID.randomUUID()}")
+        }
+        assert !tempFile.exists()
     }
-    when('obtainValue')
+    when(tasks.executeCommandByRole)
     then {
-        assert (when.ext.z as int) == (when.ext.x + when.ext.y)
+        assert tempFile.exists()
+        assert tempFile.text as int == (x + y)
+        assert tempFile.delete()
     }
 }
+
 
 task obtainValue(type: SshTask) {
     session(remotes.localhost) {
@@ -75,16 +68,20 @@ task obtainValue(type: SshTask) {
     }
 }
 
-
-feature('executing commands concurrently') {
+feature('obtaining a value from the remote command') {
     given {
+        ext {
+            x = (Math.random() * 100) as int
+            y = (Math.random() * 100) as int
+        }
     }
-    //when('executeConcurrently')
+    when(tasks.obtainValue)
     then {
+        assert z as int == (x + y)
     }
 }
 
-// TODO
+
 task executeConcurrently(type: SshTask) {
     session(remotes.localhost) {
         [0, 2, 4].each { i ->
@@ -98,6 +95,20 @@ task executeConcurrently(type: SshTask) {
     }
 }
 
+feature('executing commands concurrently') {
+    given {
+    }
+    //when('executeConcurrently')
+    then {
+    }
+}
+
+
+task executeSudoNoPwd(type: SshTask) {
+    session(remotes.localhost) {
+        execute('sudo env', pty: true)
+    }
+}
 
 feature('executing a privileged command by password-less sudo') {
     given {
@@ -107,23 +118,7 @@ feature('executing a privileged command by password-less sudo') {
     }
 }
 
-// TODO
-task executeSudoNoPwd(type: SshTask) {
-    session(remotes.localhost) {
-        execute('sudo env', pty: true)
-    }
-}
 
-
-feature('executing a privileged command with sudo interaction support') {
-    given {
-    }
-    //when('executeSudoWithPwd')
-    then {
-    }
-}
-
-// TODO
 task executeSudoWithPwd(type: SshTask) {
     doFirst {
         // of course you could just set the password in the remotes configuration,
@@ -136,6 +131,20 @@ task executeSudoWithPwd(type: SshTask) {
     }
 }
 
+feature('executing a privileged command with sudo interaction support') {
+    given {
+    }
+    //when('executeSudoWithPwd')
+    then {
+    }
+}
+
+
+task executeBadCommand(type: SshTask) {
+    session(remotes.localhost) {
+        execute 'touch /root/test'
+    }
+}
 
 feature('handling failure of the remote command') {
     given {
@@ -145,13 +154,12 @@ feature('handling failure of the remote command') {
     }
 }
 
-// TODO
-task executeBadCommand(type: SshTask) {
+
+task executeBadCommandInBackground(type: SshTask) {
     session(remotes.localhost) {
-        execute 'touch /root/test'
+        executeBackground 'touch /root/test'
     }
 }
-
 
 feature('handling failure of the remote command in background') {
     given {
@@ -161,23 +169,7 @@ feature('handling failure of the remote command in background') {
     }
 }
 
-// TODO
-task executeBadCommandInBackground(type: SshTask) {
-    session(remotes.localhost) {
-        executeBackground 'touch /root/test'
-    }
-}
 
-
-feature('stream interaction with the remote command') {
-    given {
-    }
-    //when('executeWithInteractions')
-    then {
-    }
-}
-
-// TODO
 task executeWithInteractions(type: SshTask) {
     session(remotes.localhost) {
         def oldPassword = 'old-one'
@@ -195,16 +187,15 @@ task executeWithInteractions(type: SshTask) {
     }
 }
 
-
-feature('using sshexec closure in a task') {
+feature('stream interaction with the remote command') {
     given {
     }
-    //when('executeSshInTask')
+    //when('executeWithInteractions')
     then {
     }
 }
 
-// TODO
+
 task executeSshInTask << {
     def command = "date"
     println command
@@ -215,6 +206,20 @@ task executeSshInTask << {
     }
 }
 
+feature('using sshexec closure in a task') {
+    given {
+    }
+    //when('executeSshInTask')
+    then {
+    }
+}
+
+
+task putFile(type: SshTask) {
+    session(remotes.localhost) {
+        put(file('build.gradle').path, '/dev/null')
+    }
+}
 
 feature('sending files to the remote host') {
     given {
@@ -224,32 +229,6 @@ feature('sending files to the remote host') {
     }
 }
 
-// TODO
-task putFile(type: SshTask) {
-    session(remotes.localhost) {
-        put(file('build.gradle').path, '/dev/null')
-    }
-}
-
-
-feature('acquiring data files on the remote host') {
-    given {
-        when.ext.x = (Math.random() * 100) as int
-        when.ext.y = (Math.random() * 100) as int
-        when.ext.plusFileName = UUID.randomUUID().toString()
-        when.ext.minusFileName = UUID.randomUUID().toString()
-    }
-    when('acquireDataFile')
-    then {
-        def plusFile = new File(buildDir, when.ext.plusFileName as String)
-        assert plusFile.text as int == (when.ext.x + when.ext.y)
-        assert plusFile.delete()
-
-        def minusFile = new File(buildDir, when.ext.minusFileName as String)
-        assert minusFile.text as int == (when.ext.x - when.ext.y)
-        assert minusFile.delete()
-    }
-}
 
 task acquireDataFile(type: SshTask) {
     session(remotes.localhost) {
@@ -261,5 +240,26 @@ task acquireDataFile(type: SshTask) {
 
         execute("rm -v /tmp/$plusFileName")
         execute("rm -v /tmp/$minusFileName")
+    }
+}
+
+feature('acquiring data files on the remote host') {
+    given {
+        ext {
+            x = (Math.random() * 100) as int
+            y = (Math.random() * 100) as int
+            plusFileName = UUID.randomUUID().toString()
+            minusFileName = UUID.randomUUID().toString()
+        }
+    }
+    when(tasks.acquireDataFile)
+    then {
+        def plusFile = new File(buildDir, plusFileName as String)
+        assert plusFile.text as int == (x + y)
+        assert plusFile.delete()
+
+        def minusFile = new File(buildDir, minusFileName as String)
+        assert minusFile.text as int == (x - y)
+        assert minusFile.delete()
     }
 }
